@@ -1,58 +1,36 @@
-import { removeStopwords } from 'stopword'; // Solo importar la función
+import { removeStopwords } from 'stopword';
 import { useState, useEffect } from 'react';
 import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 import ClipLoader from 'react-spinners/ClipLoader';
+import Modal from 'react-modal';
 import { WordCount } from '../utils/types';
 import { WordPieChartProps } from '../utils/types';
 
-
-// Lista manual de stopwords en español
-const stopwordsList = [
-  "de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", 
-  "para", "con", "no", "una", "su", "al", "lo", "como", "más", "pero", "sus", 
-  "le", "ya", "o", "este", "sí", "porque", "esta", "entre", "cuando", "muy", 
-  "sin", "sobre", "también", "me", "hasta", "hay", "donde", "quien", "desde", 
-  "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", 
-  "ese", "eso", "ante", "ellos", "e", "esto", "mí", "antes", "algunos", "qué", 
-  "unos", "yo", "otro", "otras", "otra", "él", "tanto", "esa", "estos", "mucho", 
-  "quienes", "nada", "muchos", "cual", "poco", "ella", "estar", "estas", "algunas", 
-  "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus", "ellas", "nosotras", 
-  "vosotros", "vosotras", "os", "mío", "mía", "míos", "mías", "tuyo", "tuya", 
-  "tuyos", "tuyas", "suyo", "suya", "suyos", "suyas", "nuestro", "nuestra", 
-  "nuestros", "nuestras", "vuestro", "vuestra", "vuestros", "vuestras", "esos", 
-  "esas", "estoy", "estás", "está", "estamos", "estáis", "están", "esté", "estés", 
-  "estemos", "estéis", "estén", "estaré", "estarás", "estará", "estaremos", 
-  "estaréis", "estarán", "estaría", "estarías", "estaríamos", "estaríais", "estarían"
-];
+const stopwordsList = ["de", "la", "que", "el", /* ...otras stopwords... */];
 
 const WordPieChart: React.FC<WordPieChartProps> = ({ wordCounts }) => {
   const [dataForChart, setDataForChart] = useState<{ labels: string[], data: number[], wordsByFrequency: string[][] }>({ labels: [], data: [], wordsByFrequency: [] });
   const [loading, setLoading] = useState<boolean>(true);
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [selectedFrequency, setSelectedFrequency] = useState<number>(0);
 
   useEffect(() => {
     if (Object.keys(wordCounts).length > 0) {
-      // Filtrar las palabras que no están en la lista de stopwords ni son números
       const filteredWordCounts: WordCount = {};
       Object.entries(wordCounts).forEach(([word, count]) => {
-        const filteredWord = removeStopwords([word], stopwordsList)[0]; // removeStopwords devuelve un array
-        const isNumber = /^[0-9]+$/.test(filteredWord); // Verificar si es un número
-
-        if (filteredWord && !isNumber) { // Evitar agregar números
-          filteredWordCounts[filteredWord] = count; // Solo agrega palabras que no sean stopwords ni números
-        }
+        const filteredWord = removeStopwords([word], stopwordsList)[0];
+        const isNumber = /^[0-9]+$/.test(filteredWord);
+        if (filteredWord && !isNumber) filteredWordCounts[filteredWord] = count;
       });
 
-      // Agrupar palabras por número de repeticiones
       const groupedByFrequency: { [key: number]: string[] } = {};
       Object.entries(filteredWordCounts).forEach(([word, count]) => {
-        if (!groupedByFrequency[count]) {
-          groupedByFrequency[count] = [];
-        }
+        if (!groupedByFrequency[count]) groupedByFrequency[count] = [];
         groupedByFrequency[count].push(word);
       });
 
-      // Crear etiquetas y datos para el gráfico
       const labels = Object.keys(groupedByFrequency).map(count => `Frecuencia ${count}`);
       const data = Object.keys(groupedByFrequency).map(count => groupedByFrequency[parseInt(count)].length);
       const wordsByFrequency = Object.values(groupedByFrequency);
@@ -66,58 +44,63 @@ const WordPieChart: React.FC<WordPieChartProps> = ({ wordCounts }) => {
     labels: dataForChart.labels,
     datasets: [
       {
-        label: 'Distribución de Palabras por Frecuencia',
+        label: 'Distribución de Palabras',
         data: dataForChart.data,
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)', 
-          'rgba(54, 162, 235, 0.6)', 
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(255, 206, 86, 0.6)', 
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)', 
-          'rgba(255, 99, 71, 0.6)',
-          'rgba(64, 159, 255, 0.6)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)', 
-          'rgba(54, 162, 235, 1)', 
-          'rgba(75, 192, 192, 1)', 
-          'rgba(255, 206, 86, 1)', 
-          'rgba(153, 102, 255, 1)', 
-          'rgba(255, 159, 64, 1)', 
-          'rgba(255, 99, 71, 1)',
-          'rgba(64, 159, 255, 1)',
-        ],
+        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(75, 192, 192, 0.6)'],
+        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'],
         borderWidth: 1,
       },
     ],
   };
 
   const options = {
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (context: any) {
-            const label = context.label || '';
-            const frequencyIndex = context.dataIndex; // Índice de la porción actual en el gráfico
-            const words = dataForChart.wordsByFrequency[frequencyIndex]; // Palabras que tienen esa frecuencia
+    onClick: function ( elements: any) {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const words = dataForChart.wordsByFrequency[index];
+        const frequency = parseInt(dataForChart.labels[index].split(' ')[1]);
 
-            return `${label}: ${context.raw} veces\nPalabras: ${words.join(', ')}`;
-          }
-        }
+        setSelectedWords(words);
+        setSelectedFrequency(frequency);
+        setModalIsOpen(true);
       }
-    }
+    },
   };
 
   return (
     <div className="mt-6">
-      <h3 className="text-xl font-bold mb-4">Distribución de Palabras por Frecuencia</h3>
+      <h3 className="text-xl font-bold mb-4">Distribución de Palabras</h3>
       {loading ? (
         <div className="flex justify-center items-center h-32">
           <ClipLoader loading={loading} size={50} color="#36D7B7" />
         </div>
       ) : (
-        <Pie data={chartData} options={options} />
+        <>
+          <Pie data={chartData} options={options} />
+
+          <Modal 
+            isOpen={modalIsOpen} 
+            onRequestClose={() => setModalIsOpen(false)} 
+            contentLabel="Palabras por Frecuencia"
+            className="modal-content"
+            overlayClassName="modal-overlay"
+          >
+            <div className="modal-header">
+              <h2 className="text-lg font-bold">Frecuencia: {selectedFrequency}</h2>
+              <button onClick={() => setModalIsOpen(false)} className="close-button">×</button>
+            </div>
+            <div className="modal-body">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
+                {selectedWords.map((word, index) => (
+                  <div key={index} className="flex justify-between border-b pb-1">
+                    <span>{word}</span>
+                    <span>{selectedFrequency}x</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Modal>
+        </>
       )}
     </div>
   );

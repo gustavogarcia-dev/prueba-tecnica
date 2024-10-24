@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { fetchData } from '../utils/fetch'; // Asegúrate de que la función fetchData esté correctamente tipada
 import { FaRetweet, FaComment, FaHeart } from 'react-icons/fa';
 import NavBar from './nav';
-// import WordFrequency from './wordFrequency';
+import WordFrequency from './wordFrequency';
 import { TweetData } from './csvReader';
-// import { WordCount } from '../utils/types';
+import { WordCount } from '../utils/types';
 
 const Statistics: React.FC = () => {
   const [, setData] = useState<TweetData[]>([]); // Estado que guarda los datos de los tweets
@@ -13,7 +13,7 @@ const Statistics: React.FC = () => {
   const [topLikes, setTopLikes] = useState<TweetData | null>(null); // Tweet con más likes
   const [topComments, setTopComments] = useState<TweetData | null>(null); // Tweet con más comentarios
   const [topShares, setTopShares] = useState<TweetData | null>(null); // Tweet con más compartidos
-  // const [wordCounts, setWordCounts] = useState<WordCount>({}); // Estado del conteo de palabras
+  const [wordCounts, setWordCounts] = useState<WordCount>({}); // Estado del conteo de palabras
 
   useEffect(() => {
     const loadData = async () => {
@@ -23,7 +23,7 @@ const Statistics: React.FC = () => {
         const flattenedData = fetchedData.flat(); // Aplana los datos si están anidados
         setData(flattenedData);
         analyzeStatistics(flattenedData); // Analizar estadísticas
-        // analyzeWordFrequency(flattenedData); // Analizar las palabras
+        analyzeWordFrequency(flattenedData); // Analizar las palabras
         setProcessing(false);
       } catch (error) {
         console.error('Error al cargar los datos:', error);
@@ -56,25 +56,25 @@ const Statistics: React.FC = () => {
     setTopShares(topShared);
   };
 
-  // Función para analizar la frecuencia de las palabras en los tweets
-  // const analyzeWordFrequency = (data: TweetData[]) => {
-  //   const connectors = ['del', 'a', 'en', 'los', 'mis', 'mío', 'y', 'que', 'de', 'el', 'la', 'un', 'una', 'es'];
-  //   const wordCount: WordCount = {};
+  // analizar la frecuencia de las palabras en los tweets
+  const analyzeWordFrequency = (data: TweetData[]) => {
+    const connectors = ['del', 'a', 'en', 'los', 'mis', 'mío', 'y', 'que', 'de', 'el', 'la', 'un', 'una', 'es'];
+    const wordCount: WordCount = {};
   
-  //   data.forEach(item => {
-  //     const words = item.text.split(/\s+/); // Divide el texto en palabras
+    data.forEach(item => {
+      const words = item.text.split(/\s+/); 
       
-  //     words.forEach(word => {
-  //       const cleanWord = word.toLowerCase().replace(/[^\wáéíóúñ]/g, ''); // Limpia la palabra
+      words.forEach(word => {
+        const cleanWord = word.toLowerCase().replace(/[^\wáéíóúñ]/g, ''); 
         
-  //       if (cleanWord && !connectors.includes(cleanWord)) {
-  //         wordCount[cleanWord] = (wordCount[cleanWord] || 0) + 1; // Incrementa el conteo
-  //       }
-  //     });
-  //   });
+        if (cleanWord && !connectors.includes(cleanWord)) {
+          wordCount[cleanWord] = (wordCount[cleanWord] || 0) + 1; 
+        }
+      });
+    });
   
-  //   setWordCounts(wordCount); // Actualiza el estado con el conteo de palabras
-  // };
+    setWordCounts(wordCount); // Actualiza el estado con el conteo de palabras
+  };
 
   const LoadingSkeleton: React.FC = () => (
     <div className="animate-pulse p-4 bg-gray-300 rounded-lg h-24 flex items-center justify-center">
@@ -123,7 +123,7 @@ const Statistics: React.FC = () => {
           </div>
         </div>
 
-        {/* <WordFrequency wordCounts={wordCounts} /> */}
+        <WordFrequency wordCounts={wordCounts} />
       </div>
     </div>
   );

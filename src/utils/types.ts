@@ -21,7 +21,7 @@ export  interface SentimentResult {
   
   // Tipado del estado de las estadísticas
 export  interface WordCount {
-    [key: string]: number; // Cada palabra es la clave, y su conteo es el valor
+    [key: string]: number; 
   }
 
   // Definir las propiedades que recibe el componente
