@@ -17,7 +17,7 @@ export interface TweetData {
 }
 
 const CsvReader: React.FC = () => {
-  const [data, setData] = useState<TweetData[]>([]);
+  const [, setData] = useState<TweetData[]>([]);
   const [visibleData, setVisibleData] = useState<TweetData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [startIndex, setStartIndex] = useState(0);
